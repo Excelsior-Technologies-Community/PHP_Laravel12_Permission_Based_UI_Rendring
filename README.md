@@ -32,7 +32,7 @@ The system ensures that users only see and perform actions they are authorized f
 
 ---
 
-##  Folder Structure (Key Files)
+##  Folder Structure
 
 ```
 app/
