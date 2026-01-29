@@ -1,4 +1,14 @@
-# Laravel 12 Permission Based UI Rendering
+# PHP_Laravel12_Permission_Based_UI_Rendring
+
+<p align="center">
+<a href="#"><img src="https://img.shields.io/badge/Laravel-12-red" alt="Laravel Version"></a>
+<a href="#"><img src="https://img.shields.io/badge/RBAC-Enabled-blue" alt="RBAC System"></a>
+<a href="#"><img src="https://img.shields.io/badge/Auth-Breeze-green" alt="Auth System"></a>
+<a href="#"><img src="https://img.shields.io/badge/Permissions-Spatie-orange" alt="Spatie Permission"></a>
+<a href="#"><img src="https://img.shields.io/badge/PHP-8.2+-purple" alt="PHP Version"></a>
+<a href="#"><img src="https://img.shields.io/badge/License-MIT-lightgrey" alt="License"></a>
+</p>
+
 
 ##  Overview
 
