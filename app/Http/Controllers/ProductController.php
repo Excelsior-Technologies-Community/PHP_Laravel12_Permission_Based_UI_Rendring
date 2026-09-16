@@ -3,50 +3,99 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller; 
+use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function index()
+    /**
+     * Display products.
+     */
+    public function index(): View
     {
-        $products = Product::all();
+        $products = Product::latest()->get();
+
         return view('products.index', compact('products'));
     }
 
-    public function create()
+    /**
+     * Show create form.
+     */
+    public function create(): View
     {
         return view('products.create');
     }
 
-    public function store(Request $request)
+    /**
+     * Store product.
+     */
+    public function store(Request $request): RedirectResponse
     {
-        Product::create($request->validate([
-            'name' => 'required',
-            'price' => 'required|numeric'
-        ]));
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'price' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+        ]);
 
-        return redirect()->route('products.index');
+        Product::create($validated);
+
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product created successfully.');
     }
 
-    public function edit(Product $product)
+    /**
+     * Show edit form.
+     */
+    public function edit(Product $product): View
     {
         return view('products.edit', compact('product'));
     }
 
-    public function update(Request $request, Product $product)
-    {
-        $product->update($request->validate([
-            'name' => 'required',
-            'price' => 'required|numeric'
-        ]));
+    /**
+     * Update product.
+     */
+    public function update(
+        Request $request,
+        Product $product
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'price' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+        ]);
 
-        return redirect()->route('products.index');
+        $product->update($validated);
+
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product updated successfully.');
     }
 
-    public function destroy(Product $product)
+    /**
+     * Delete product.
+     */
+    public function destroy(Product $product): RedirectResponse
     {
         $product->delete();
-        return redirect()->route('products.index');
+
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product deleted successfully.');
     }
 }
