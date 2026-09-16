@@ -9,19 +9,69 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        /*
+         * Create roles and permissions first.
+         */
         $this->call(RolePermissionSeeder::class);
 
-        $user = User::firstOrCreate(
-            ['email' => 'admin@example.com'], // check by email
+        /*
+         * Super Admin
+         */
+        $superAdmin = User::firstOrCreate(
+            [
+                'email' => 'superadmin@example.com',
+            ],
+            [
+                'name' => 'Super Admin',
+                'password' => bcrypt('password'),
+            ]
+        );
+
+        $superAdmin->syncRoles(['super-admin']);
+
+        /*
+         * Admin
+         */
+        $admin = User::firstOrCreate(
+            [
+                'email' => 'admin@example.com',
+            ],
             [
                 'name' => 'Admin User',
                 'password' => bcrypt('password'),
             ]
         );
 
-        // Assign role only if not already assigned
-        if (!$user->hasRole('admin')) {
-            $user->assignRole('admin');
-        }
+        $admin->syncRoles(['admin']);
+
+        /*
+         * Staff
+         */
+        $staff = User::firstOrCreate(
+            [
+                'email' => 'staff@example.com',
+            ],
+            [
+                'name' => 'Staff User',
+                'password' => bcrypt('password'),
+            ]
+        );
+
+        $staff->syncRoles(['staff']);
+
+        /*
+         * Normal User
+         */
+        $user = User::firstOrCreate(
+            [
+                'email' => 'user@example.com',
+            ],
+            [
+                'name' => 'Normal User',
+                'password' => bcrypt('password'),
+            ]
+        );
+
+        $user->syncRoles([]);
     }
 }

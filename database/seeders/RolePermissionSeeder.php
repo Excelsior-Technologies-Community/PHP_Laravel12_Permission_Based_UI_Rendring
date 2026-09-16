@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -18,23 +18,76 @@ class RolePermissionSeeder extends Seeder
             'create products',
             'edit products',
             'delete products',
+
+            // Additional permission for demonstration
+            'export products',
+            'view product reports',
         ];
 
+        /*
+         * Create permissions.
+         */
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+
+            Permission::firstOrCreate(
+                [
+                    'name' => $permission,
+                    'guard_name' => 'web',
+                ]
+            );
+
         }
 
-        $admin = Role::firstOrCreate(['name' => 'admin']);
-        $staff = Role::firstOrCreate(['name' => 'staff']);
+        /*
+         * Create roles.
+         */
+        $admin = Role::firstOrCreate(
+            [
+                'name' => 'admin',
+                'guard_name' => 'web',
+            ]
+        );
 
-        // 👑 Super Admin Role
-        $superAdmin = Role::firstOrCreate(['name' => 'super-admin']);
+        $staff = Role::firstOrCreate(
+            [
+                'name' => 'staff',
+                'guard_name' => 'web',
+            ]
+        );
 
-        $admin->syncPermissions(Permission::all());
+        $superAdmin = Role::firstOrCreate(
+            [
+                'name' => 'super-admin',
+                'guard_name' => 'web',
+            ]
+        );
 
+        /*
+         * Admin
+         */
+        $admin->syncPermissions([
+            'view products',
+            'create products',
+            'edit products',
+            'delete products',
+        ]);
+
+        /*
+         * Staff
+         */
         $staff->syncPermissions([
             'view products',
             'edit products',
         ]);
+
+        /*
+         * Super Admin gets all permissions.
+         *
+         * Gate::before() also gives Super Admin
+         * global bypass.
+         */
+        $superAdmin->syncPermissions(
+            Permission::all()
+        );
     }
 }
