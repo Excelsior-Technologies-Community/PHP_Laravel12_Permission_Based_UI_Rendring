@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserRoleController;
 use Illuminate\Support\Facades\Route;
 
+
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -17,6 +18,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+
 /*
 |--------------------------------------------------------------------------
 | Dashboard
@@ -25,7 +27,10 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -35,83 +40,132 @@ Route::get('/dashboard', function () {
 
 Route::middleware('auth')->group(function () {
 
-    Route::get('/profile', [
-        ProfileController::class,
-        'edit'
-    ])->name('profile.edit');
+    Route::get(
+        '/profile',
+        [ProfileController::class, 'edit']
+    )->name('profile.edit');
 
-    Route::patch('/profile', [
-        ProfileController::class,
-        'update'
-    ])->name('profile.update');
+    Route::patch(
+        '/profile',
+        [ProfileController::class, 'update']
+    )->name('profile.update');
 
-    Route::delete('/profile', [
-        ProfileController::class,
-        'destroy'
-    ])->name('profile.destroy');
+    Route::delete(
+        '/profile',
+        [ProfileController::class, 'destroy']
+    )->name('profile.destroy');
 
 });
+
 
 /*
 |--------------------------------------------------------------------------
 | Product Routes
 |--------------------------------------------------------------------------
-|
-| Backend permission protection is applied here.
-|
 */
 
 Route::middleware('auth')->group(function () {
 
-    // View products
-    Route::get('/products', [
-        ProductController::class,
-        'index'
-    ])
+    /*
+     * Product listing.
+     */
+    Route::get(
+        '/products',
+        [ProductController::class, 'index']
+    )
         ->middleware('permission:view products')
         ->name('products.index');
 
-    // Create product form
-    Route::get('/products/create', [
-        ProductController::class,
-        'create'
-    ])
+
+    /*
+     * Product statistics.
+     */
+    Route::get(
+        '/products/statistics',
+        [ProductController::class, 'statistics']
+    )
+        ->middleware('permission:view products')
+        ->name('products.statistics');
+
+
+    /*
+     * Product CSV export.
+     */
+    Route::get(
+        '/products/export',
+        [ProductController::class, 'export']
+    )
+        ->middleware('permission:view products')
+        ->name('products.export');
+
+
+    /*
+     * Create product form.
+     */
+    Route::get(
+        '/products/create',
+        [ProductController::class, 'create']
+    )
         ->middleware('permission:create products')
         ->name('products.create');
 
-    // Store product
-    Route::post('/products', [
-        ProductController::class,
-        'store'
-    ])
+
+    /*
+     * Store product.
+     */
+    Route::post(
+        '/products',
+        [ProductController::class, 'store']
+    )
         ->middleware('permission:create products')
         ->name('products.store');
 
-    // Edit product form
-    Route::get('/products/{product}/edit', [
-        ProductController::class,
-        'edit'
-    ])
+
+    /*
+     * Bulk delete.
+     */
+    Route::delete(
+        '/products/bulk-delete',
+        [ProductController::class, 'bulkDelete']
+    )
+        ->middleware('permission:delete products')
+        ->name('products.bulk-delete');
+
+
+    /*
+     * Edit product.
+     */
+    Route::get(
+        '/products/{product}/edit',
+        [ProductController::class, 'edit']
+    )
         ->middleware('permission:edit products')
         ->name('products.edit');
 
-    // Update product
-    Route::put('/products/{product}', [
-        ProductController::class,
-        'update'
-    ])
+
+    /*
+     * Update product.
+     */
+    Route::put(
+        '/products/{product}',
+        [ProductController::class, 'update']
+    )
         ->middleware('permission:edit products')
         ->name('products.update');
 
-    // Delete product
-    Route::delete('/products/{product}', [
-        ProductController::class,
-        'destroy'
-    ])
+
+    /*
+     * Delete product.
+     */
+    Route::delete(
+        '/products/{product}',
+        [ProductController::class, 'destroy']
+    )
         ->middleware('permission:delete products')
         ->name('products.destroy');
 
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -121,20 +175,21 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware([
     'auth',
-    'role:super-admin'
+    'role:super-admin',
 ])->group(function () {
 
-    Route::get('/user-roles', [
-        UserRoleController::class,
-        'index'
-    ])->name('user.roles');
+    Route::get(
+        '/user-roles',
+        [UserRoleController::class, 'index']
+    )->name('user.roles');
 
-    Route::post('/user-roles/{user}', [
-        UserRoleController::class,
-        'update'
-    ])->name('user.roles.update');
+    Route::post(
+        '/user-roles/{user}',
+        [UserRoleController::class, 'update']
+    )->name('user.roles.update');
 
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -144,30 +199,31 @@ Route::middleware([
 
 Route::middleware([
     'auth',
-    'role:super-admin'
+    'role:super-admin',
 ])->group(function () {
 
-    Route::get('/permissions', [
-        PermissionManagementController::class,
-        'index'
-    ])->name('permissions.index');
+    Route::get(
+        '/permissions',
+        [PermissionManagementController::class, 'index']
+    )->name('permissions.index');
 
-    Route::post('/permissions', [
-        PermissionManagementController::class,
-        'store'
-    ])->name('permissions.store');
+    Route::post(
+        '/permissions',
+        [PermissionManagementController::class, 'store']
+    )->name('permissions.store');
 
-    Route::put('/permissions/roles/{role}', [
-        PermissionManagementController::class,
-        'updateRolePermissions'
-    ])->name('permissions.roles.update');
+    Route::put(
+        '/permissions/roles/{role}',
+        [PermissionManagementController::class, 'updateRolePermissions']
+    )->name('permissions.roles.update');
 
-    Route::delete('/permissions/{permission}', [
-        PermissionManagementController::class,
-        'destroyPermission'
-    ])->name('permissions.destroy');
+    Route::delete(
+        '/permissions/{permission}',
+        [PermissionManagementController::class, 'destroyPermission']
+    )->name('permissions.destroy');
 
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -177,15 +233,16 @@ Route::middleware([
 
 Route::middleware([
     'auth',
-    'role:super-admin'
+    'role:super-admin',
 ])->group(function () {
 
-    Route::get('/access-activities', [
-        AccessActivityController::class,
-        'index'
-    ])->name('access.activities');
+    Route::get(
+        '/access-activities',
+        [AccessActivityController::class, 'index']
+    )->name('access.activities');
 
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -193,4 +250,4 @@ Route::middleware([
 |--------------------------------------------------------------------------
 */
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

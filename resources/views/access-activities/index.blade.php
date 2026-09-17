@@ -16,19 +16,22 @@
 
     </x-slot>
 
+
     <div class="py-8">
 
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- Search --}}
+
+            {{-- Filters --}}
             <div class="bg-white shadow-sm sm:rounded-lg p-6 mb-6">
 
                 <form
                     method="GET"
                     action="{{ route('access.activities') }}"
-                    class="grid grid-cols-1 md:grid-cols-3 gap-4"
+                    class="grid grid-cols-1 md:grid-cols-5 gap-4"
                 >
 
+                    {{-- Search --}}
                     <div>
 
                         <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -45,6 +48,8 @@
 
                     </div>
 
+
+                    {{-- Action --}}
                     <div>
 
                         <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -75,7 +80,74 @@
 
                     </div>
 
-                    <div class="flex items-end gap-2">
+
+                    {{-- Actor --}}
+                    <div>
+
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Performed By
+                        </label>
+
+                        <select
+                            name="actor_id"
+                            class="w-full border border-gray-300 rounded-md px-4 py-2"
+                        >
+
+                            <option value="">
+                                All Users
+                            </option>
+
+                            @foreach($actors as $actor)
+
+                                <option
+                                    value="{{ $actor->id }}"
+                                    @selected((string) $actorId === (string) $actor->id)
+                                >
+                                    {{ $actor->name }}
+                                </option>
+
+                            @endforeach
+
+                        </select>
+
+                    </div>
+
+
+                    {{-- Date From --}}
+                    <div>
+
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Date From
+                        </label>
+
+                        <input
+                            type="date"
+                            name="date_from"
+                            value="{{ $dateFrom }}"
+                            class="w-full border border-gray-300 rounded-md px-4 py-2"
+                        >
+
+                    </div>
+
+
+                    {{-- Date To --}}
+                    <div>
+
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Date To
+                        </label>
+
+                        <input
+                            type="date"
+                            name="date_to"
+                            value="{{ $dateTo }}"
+                            class="w-full border border-gray-300 rounded-md px-4 py-2"
+                        >
+
+                    </div>
+
+
+                    <div class="md:col-span-5 flex gap-2">
 
                         <button
                             type="submit"
@@ -97,7 +169,8 @@
 
             </div>
 
-            {{-- Activity Table --}}
+
+            {{-- Table --}}
             <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
 
                 <div class="p-6 border-b">
@@ -111,6 +184,7 @@
                     </p>
 
                 </div>
+
 
                 <div class="overflow-x-auto">
 
@@ -133,12 +207,17 @@
                                 </th>
 
                                 <th class="text-left p-4 border-b">
+                                    Target
+                                </th>
+
+                                <th class="text-left p-4 border-b">
                                     Description
                                 </th>
 
                             </tr>
 
                         </thead>
+
 
                         <tbody>
 
@@ -155,6 +234,7 @@
                                         </div>
 
                                     </td>
+
 
                                     <td class="p-4 border-b">
 
@@ -178,16 +258,49 @@
 
                                     </td>
 
+
                                     <td class="p-4 border-b">
 
                                         <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+
                                             {{ ucwords(str_replace('_', ' ', $activity->action)) }}
+
                                         </span>
 
                                     </td>
 
+
+                                    <td class="p-4 border-b text-sm">
+
+                                        <div class="font-medium">
+                                            {{ ucfirst($activity->target_type) }}
+                                        </div>
+
+                                        <div class="text-xs text-gray-500">
+                                            ID: {{ $activity->target_id }}
+                                        </div>
+
+                                    </td>
+
+
                                     <td class="p-4 border-b text-sm text-gray-700">
+
                                         {{ $activity->description }}
+
+                                        @if($activity->metadata)
+
+                                            <details class="mt-2">
+
+                                                <summary class="cursor-pointer text-xs text-blue-600">
+                                                    View Details
+                                                </summary>
+
+                                                <pre class="text-xs bg-gray-100 p-2 rounded mt-2 overflow-x-auto">{{ json_encode($activity->metadata, JSON_PRETTY_PRINT) }}</pre>
+
+                                            </details>
+
+                                        @endif
+
                                     </td>
 
                                 </tr>
@@ -197,7 +310,7 @@
                                 <tr>
 
                                     <td
-                                        colspan="4"
+                                        colspan="5"
                                         class="p-8 text-center text-gray-500"
                                     >
                                         No activity records found.
@@ -213,10 +326,13 @@
 
                 </div>
 
+
                 @if($activities->hasPages())
 
                     <div class="p-6 border-t">
+
                         {{ $activities->links() }}
+
                     </div>
 
                 @endif
