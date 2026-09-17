@@ -15,25 +15,85 @@ class PermissionManagementController extends Controller
     /**
      * Display roles and permissions.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
+        $permissionSearch = trim(
+            $request->input('permission_search', '')
+        );
+
+        $permissionGuard = $request->input(
+            'permission_guard',
+            ''
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Roles
+        |--------------------------------------------------------------------------
+        */
         $roles = Role::with('permissions')
             ->orderBy('name')
             ->get();
 
-        $permissions = Permission::orderBy('name')->get();
+        /*
+        |--------------------------------------------------------------------------
+        | Permissions
+        |--------------------------------------------------------------------------
+        | Permission search + guard filter
+        |--------------------------------------------------------------------------
+        */
+        $permissions = Permission::query()
+            ->when(
+                $permissionSearch,
+                function ($query) use ($permissionSearch) {
+                    $query->where(
+                        'name',
+                        'like',
+                        "%{$permissionSearch}%"
+                    );
+                }
+            )
+            ->when(
+                $permissionGuard,
+                function ($query) use ($permissionGuard) {
+                    $query->where(
+                        'guard_name',
+                        $permissionGuard
+                    );
+                }
+            )
+            ->orderBy('name')
+            ->get();
 
-        return view('permissions.index', compact(
-            'roles',
-            'permissions'
-        ));
+        /*
+        |--------------------------------------------------------------------------
+        | Available Guards
+        |--------------------------------------------------------------------------
+        */
+        $guards = Permission::query()
+            ->select('guard_name')
+            ->distinct()
+            ->orderBy('guard_name')
+            ->pluck('guard_name');
+
+        return view(
+            'permissions.index',
+            compact(
+                'roles',
+                'permissions',
+                'guards',
+                'permissionSearch',
+                'permissionGuard'
+            )
+        );
     }
 
     /**
      * Create a new permission.
      */
-    public function store(Request $request): RedirectResponse
-    {
+    public function store(
+        Request $request
+    ): RedirectResponse {
         $validated = $request->validate([
             'name' => [
                 'required',
@@ -44,17 +104,27 @@ class PermissionManagementController extends Controller
         ]);
 
         $permission = Permission::create([
-            'name' => strtolower(trim($validated['name'])),
+            'name' => strtolower(
+                trim($validated['name'])
+            ),
+
             'guard_name' => 'web',
         ]);
 
         AccessActivity::create([
             'actor_id' => auth()->id(),
+
             'action' => 'permission_created',
+
             'target_type' => 'permission',
+
             'target_id' => $permission->id,
+
             'description' => auth()->user()->name
-                . ' created permission "' . $permission->name . '"',
+                . ' created permission "'
+                . $permission->name
+                . '"',
+
             'metadata' => [
                 'permission' => $permission->name,
             ],
@@ -73,9 +143,6 @@ class PermissionManagementController extends Controller
         Request $request,
         Role $role
     ): RedirectResponse {
-        /*
-         * Validate submitted permission IDs.
-         */
         $validated = $request->validate([
             'permissions' => [
                 'nullable',
@@ -88,87 +155,86 @@ class PermissionManagementController extends Controller
             ],
         ]);
 
-        /*
-         * Get selected permission IDs.
-         *
-         * Example:
-         * [1, 3, 6]
-         */
-        $permissionIds = $validated['permissions'] ?? [];
+        $permissionIds =
+            $validated['permissions'] ?? [];
 
         /*
-         * Get the role's current permissions
-         * before updating them.
-         */
+        |--------------------------------------------------------------------------
+        | Existing permissions
+        |--------------------------------------------------------------------------
+        */
         $oldPermissions = $role->permissions
             ->pluck('name')
             ->values()
             ->toArray();
 
         /*
-         * IMPORTANT:
-         *
-         * Convert permission IDs into actual
-         * Permission models.
-         *
-         * Do NOT pass numeric IDs directly to
-         * syncPermissions().
-         */
+        |--------------------------------------------------------------------------
+        | New permissions
+        |--------------------------------------------------------------------------
+        */
         $permissions = Permission::query()
-            ->whereIn('id', $permissionIds)
-            ->where('guard_name', 'web')
+            ->whereIn(
+                'id',
+                $permissionIds
+            )
+            ->where(
+                'guard_name',
+                'web'
+            )
             ->get();
 
-        /*
-         * Get permission names after conversion.
-         *
-         * Example:
-         *
-         * [1, 3, 6]
-         *
-         * becomes:
-         *
-         * [
-         *     'view products',
-         *     'edit products',
-         *     'delete products'
-         * ]
-         */
         $newPermissions = $permissions
             ->pluck('name')
             ->values()
             ->toArray();
 
         /*
-         * Sync actual Permission models.
-         */
-        $role->syncPermissions($permissions);
+        |--------------------------------------------------------------------------
+        | Sync permissions
+        |--------------------------------------------------------------------------
+        */
+        $role->syncPermissions(
+            $permissions
+        );
 
         /*
-         * Determine which permissions were added.
-         */
-        $added = array_values(array_diff(
-            $newPermissions,
-            $oldPermissions
-        ));
+        |--------------------------------------------------------------------------
+        | Detect added permissions
+        |--------------------------------------------------------------------------
+        */
+        $added = array_values(
+            array_diff(
+                $newPermissions,
+                $oldPermissions
+            )
+        );
 
         /*
-         * Determine which permissions were removed.
-         */
-        $removed = array_values(array_diff(
-            $oldPermissions,
-            $newPermissions
-        ));
+        |--------------------------------------------------------------------------
+        | Detect removed permissions
+        |--------------------------------------------------------------------------
+        */
+        $removed = array_values(
+            array_diff(
+                $oldPermissions,
+                $newPermissions
+            )
+        );
 
         /*
-         * Log added permissions.
-         */
+        |--------------------------------------------------------------------------
+        | Log added permissions
+        |--------------------------------------------------------------------------
+        */
         if (!empty($added)) {
-
             AccessActivity::create([
                 'actor_id' => auth()->id(),
+
                 'action' => 'permissions_added',
+
                 'target_type' => 'role',
+
                 'target_id' => $role->id,
 
                 'description' => auth()->user()->name
@@ -184,14 +250,18 @@ class PermissionManagementController extends Controller
         }
 
         /*
-         * Log removed permissions.
-         */
+        |--------------------------------------------------------------------------
+        | Log removed permissions
+        |--------------------------------------------------------------------------
+        */
         if (!empty($removed)) {
-
             AccessActivity::create([
                 'actor_id' => auth()->id(),
+
                 'action' => 'permissions_removed',
+
                 'target_type' => 'role',
+
                 'target_id' => $role->id,
 
                 'description' => auth()->user()->name
@@ -206,9 +276,6 @@ class PermissionManagementController extends Controller
             ]);
         }
 
-        /*
-         * Return to permission management page.
-         */
         return back()->with(
             'success',
             'Permissions updated successfully for "'
@@ -224,20 +291,28 @@ class PermissionManagementController extends Controller
         Permission $permission
     ): RedirectResponse {
         $permissionName = $permission->name;
+
         $permissionId = $permission->id;
 
-        DB::transaction(function () use ($permission) {
-            $permission->delete();
-        });
+        DB::transaction(
+            function () use ($permission) {
+                $permission->delete();
+            }
+        );
 
         AccessActivity::create([
             'actor_id' => auth()->id(),
+
             'action' => 'permission_deleted',
+
             'target_type' => 'permission',
+
             'target_id' => $permissionId,
 
             'description' => auth()->user()->name
-                . ' deleted permission "' . $permissionName . '"',
+                . ' deleted permission "'
+                . $permissionName
+                . '"',
 
             'metadata' => [
                 'permission' => $permissionName,
