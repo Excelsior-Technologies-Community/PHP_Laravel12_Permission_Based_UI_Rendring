@@ -327,6 +327,7 @@
                 </div>
 
 
+                
                 @if($activities->hasPages())
 
                     <div class="p-6 border-t">
