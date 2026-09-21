@@ -18,62 +18,48 @@ class RolePermissionSeeder extends Seeder
             'create products',
             'edit products',
             'delete products',
-
-            // Additional permission for demonstration
             'export products',
             'view product reports',
+
+            // Sensitive field-level permissions
+            'view product costs',
+            'edit product costs',
         ];
 
         /*
          * Create permissions.
          */
         foreach ($permissions as $permission) {
-
-            Permission::firstOrCreate(
-                [
-                    'name' => $permission,
-                    'guard_name' => 'web',
-                ]
-            );
-
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web',
+            ]);
         }
 
         /*
          * Create roles.
          */
-        $admin = Role::firstOrCreate(
-            [
-                'name' => 'admin',
-                'guard_name' => 'web',
-            ]
-        );
-
-        $staff = Role::firstOrCreate(
-            [
-                'name' => 'staff',
-                'guard_name' => 'web',
-            ]
-        );
-
-        $superAdmin = Role::firstOrCreate(
-            [
-                'name' => 'super-admin',
-                'guard_name' => 'web',
-            ]
-        );
+        $superAdmin = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
+        $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $staff = Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'web']);
+        $viewer = Role::firstOrCreate(['name' => 'viewer', 'guard_name' => 'web']);
 
         /*
-         * Admin
+         * Admin permissions
          */
         $admin->syncPermissions([
             'view products',
             'create products',
             'edit products',
             'delete products',
+            'export products',
+            'view product reports',
+            'view product costs',
+            'edit product costs',
         ]);
 
         /*
-         * Staff
+         * Staff permissions (No delete, no sensitive costs access)
          */
         $staff->syncPermissions([
             'view products',
@@ -81,13 +67,15 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         /*
-         * Super Admin gets all permissions.
-         *
-         * Gate::before() also gives Super Admin
-         * global bypass.
+         * Viewer permissions (Read-only basic product info)
          */
-        $superAdmin->syncPermissions(
-            Permission::all()
-        );
+        $viewer->syncPermissions([
+            'view products',
+        ]);
+
+        /*
+         * Super Admin gets all permissions.
+         */
+        $superAdmin->syncPermissions(Permission::all());
     }
 }
