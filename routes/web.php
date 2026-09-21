@@ -4,8 +4,20 @@ use App\Http\Controllers\AccessActivityController;
 use App\Http\Controllers\PermissionManagementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RoleSimulatorController;
 use App\Http\Controllers\UserRoleController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Live Role Simulator & UI Policy Controls
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
+    Route::post('/simulator/switch', [RoleSimulatorController::class, 'switchRole'])->name('simulator.switch');
+    Route::post('/simulator/exit', [RoleSimulatorController::class, 'exitSimulation'])->name('simulator.exit');
+    Route::post('/simulator/policy', [RoleSimulatorController::class, 'togglePolicy'])->name('simulator.policy');
+});
 
 
 /*
